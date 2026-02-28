@@ -8,24 +8,73 @@ import './index.scss'
 const DEFAULT_LATITUDE = 39.908823
 const DEFAULT_LONGITUDE = 116.397470
 
-class Index extends Component {
-    constructor(props) {
+/** 地图标记点类型 */
+interface MarkerItem {
+    id: number
+    latitude: number
+    longitude: number
+    title: string
+    iconPath: string
+    width: number
+    height: number
+    callout?: {
+        content: string
+        color: string
+        bgColor: string
+        borderRadius: number
+        padding: number
+        display: string
+        fontSize: number
+    }
+}
+
+/** 轨迹线坐标点 */
+interface PolylinePoint {
+    latitude: number
+    longitude: number
+}
+
+/** 轨迹线配置 */
+interface PolylineItem {
+    points: PolylinePoint[]
+    color: string
+    width: number
+    dottedLine: boolean
+    arrowLine: boolean
+    borderColor: string
+    borderWidth: number
+}
+
+/** 途经点展示信息 */
+interface WaypointInfo {
+    name: string
+    lat: string
+    lng: string
+}
+
+/** 页面 State 类型 */
+interface IndexState {
+    latitude: number
+    longitude: number
+    targetDistance: number
+    markers: MarkerItem[]
+    polyline: PolylineItem[]
+    locationReady: boolean
+    generating: boolean
+    waypoints: WaypointInfo[]
+}
+
+class Index extends Component<Record<string, never>, IndexState> {
+    constructor(props: Record<string, never>) {
         super(props)
         this.state = {
-            // 用户当前位置
             latitude: DEFAULT_LATITUDE,
             longitude: DEFAULT_LONGITUDE,
-            // 输入的目标距离（单位：km）
             targetDistance: 5,
-            // 地图标记点
             markers: [],
-            // 闭环轨迹线
             polyline: [],
-            // 是否已获取定位
             locationReady: false,
-            // 是否正在生成路线
             generating: false,
-            // 途经点信息（展示用）
             waypoints: []
         }
     }
@@ -38,9 +87,9 @@ class Index extends Component {
      * 获取用户真实定位
      * 如果用户拒绝，则 fallback 到默认坐标并给出提示
      */
-    getUserLocation = () => {
+    getUserLocation = (): void => {
         Taro.getLocation({
-            type: 'gcj02', // 使用国测局坐标系，与微信地图一致
+            type: 'gcj02',
             success: (res) => {
                 console.log('定位成功:', res.latitude, res.longitude)
                 this.setState({
@@ -69,7 +118,7 @@ class Index extends Component {
     /**
      * 创建"起点/家"的地图标记
      */
-    createHomeMarker = (lat, lng) => {
+    createHomeMarker = (lat: number, lng: number): MarkerItem => {
         return {
             id: 0,
             latitude: lat,
@@ -93,9 +142,9 @@ class Index extends Component {
     /**
      * 创建途经点标记
      */
-    createWaypointMarker = (id, lat, lng, label) => {
+    createWaypointMarker = (id: number, lat: number, lng: number, label: string): MarkerItem => {
         return {
-            id: id,
+            id,
             latitude: lat,
             longitude: lng,
             title: label,
@@ -117,7 +166,7 @@ class Index extends Component {
     /**
      * 处理距离输入变化
      */
-    onDistanceInput = (e) => {
+    onDistanceInput = (e: { detail: { value: string } }): void => {
         const value = parseFloat(e.detail.value)
         if (!isNaN(value) && value > 0) {
             this.setState({ targetDistance: value })
@@ -133,55 +182,47 @@ class Index extends Component {
      * 3. 将 起点 → 途经点1 → 途经点2 → 途经点3 → 起点 连成闭环
      *
      * 数学估算：
-     * - 三角形闭环的周长 ≈ 3 × √3 × 半径 ≈ 5.196 × 半径
-     * - 所以 半径 ≈ 目标距离 / 5.196
-     * - 为了更精确：半径 = 目标距离 / (3 * √3) ≈ 目标距离 * 0.1925
+     * - 等边三角形周长 = 3 * 边长，边长 = R * √3
+     * - 周长 = 3 * R * √3 ≈ 5.196 * R
+     * - 半径 = 目标距离 / (3 * √3)
      */
-    generateLoopRoute = () => {
+    generateLoopRoute = (): void => {
         const { latitude, longitude, targetDistance } = this.state
 
         this.setState({ generating: true })
 
         try {
-            // 估算三角形闭环的半径
-            // 等边三角形周长 = 3 * 边长，边长 = 2 * R * sin(60°) = R * √3
-            // 周长 = 3 * R * √3 ≈ 5.196 * R
-            const radius = targetDistance / (3 * Math.sqrt(3)) // 单位：km
+            const radius = targetDistance / (3 * Math.sqrt(3))
 
-            // 起点坐标（Turf.js 使用 [经度, 纬度] 格式）
             const origin = turf.point([longitude, latitude])
 
-            // 计算三个方向的途经点
-            const bearings = [0, 120, 240] // 正北、右下、左下
-            const directionNames = ['📍 途经点1 (北)', '📍 途经点2 (东南)', '📍 途经点3 (西南)']
+            const bearings: number[] = [0, 120, 240]
+            const directionNames: string[] = ['📍 途经点1 (北)', '📍 途经点2 (东南)', '📍 途经点3 (西南)']
 
-            const waypointCoords = bearings.map((bearing) => {
+            const waypointCoords: number[][] = bearings.map((bearing) => {
                 const destination = turf.destination(origin, radius, bearing, { units: 'kilometers' })
-                return destination.geometry.coordinates // [经度, 纬度]
+                return destination.geometry.coordinates
             })
 
-            // 构建途经点标记
-            const waypointMarkers = waypointCoords.map((coord, index) => {
+            const waypointMarkers: MarkerItem[] = waypointCoords.map((coord, index) => {
                 return this.createWaypointMarker(
                     index + 1,
-                    coord[1], // 纬度
-                    coord[0], // 经度
+                    coord[1],
+                    coord[0],
                     directionNames[index]
                 )
             })
 
-            // 构建闭环轨迹线坐标：起点 → 途经点1 → 途经点2 → 途经点3 → 起点
-            const polylinePoints = [
+            const polylinePoints: PolylinePoint[] = [
                 { latitude, longitude },
                 ...waypointCoords.map((coord) => ({
                     latitude: coord[1],
                     longitude: coord[0]
                 })),
-                { latitude, longitude } // 回到起点，闭合路线
+                { latitude, longitude }
             ]
 
-            // 计算实际路线长度（验证用）
-            const lineCoords = [
+            const lineCoords: number[][] = [
                 [longitude, latitude],
                 ...waypointCoords,
                 [longitude, latitude]
@@ -191,7 +232,6 @@ class Index extends Component {
 
             console.log(`目标距离: ${targetDistance}km, 估算半径: ${radius.toFixed(3)}km, 实际路线长度: ${actualLength.toFixed(2)}km`)
 
-            // 更新状态
             this.setState({
                 markers: [
                     this.createHomeMarker(latitude, longitude),
@@ -274,7 +314,6 @@ class Index extends Component {
                         </Button>
                     </View>
 
-                    {/* 途经点信息展示 */}
                     {waypoints.length > 0 && (
                         <View className='waypoints-info'>
                             {waypoints.map((wp, idx) => (

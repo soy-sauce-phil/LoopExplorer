@@ -1,7 +1,7 @@
-import { Component } from 'react'
+import { Component, PropsWithChildren } from 'react'
 import './app.scss'
 
-class App extends Component {
+class App extends Component<PropsWithChildren> {
     componentDidMount() { }
 
     componentDidShow() { }
@@ -9,7 +9,6 @@ class App extends Component {
     componentDidHide() { }
 
     render() {
-        // this.props.children 是将要会渲染的页面
         return this.props.children
     }
 }
