@@ -1,0 +1,162 @@
+// ===== 全局变量 =====
+$primary-color: #6c5ce7;
+$primary-light: #a29bfe;
+$accent-color: #00b894;
+$bg-dark: #0f0f23;
+$bg-panel: #1a1a2e;
+$bg-input: #16213e;
+$text-primary: #e0e0e0;
+$text-secondary: #a0a0b0;
+$border-color: #2a2a4a;
+
+// ===== 页面整体布局 =====
+.index-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: $bg-dark;
+}
+
+// ===== 控制面板 =====
+.control-panel {
+    flex-shrink: 0;
+    padding: 24px 28px;
+    background: linear-gradient(180deg, $bg-panel 0%, darken($bg-panel, 3%) 100%);
+    border-bottom: 1px solid $border-color;
+    z-index: 10;
+
+    .panel-header {
+        margin-bottom: 20px;
+
+        .app-title {
+            display: block;
+            font-size: 38px;
+            font-weight: 700;
+            color: $primary-light;
+            letter-spacing: 2px;
+        }
+
+        .app-subtitle {
+            display: block;
+            font-size: 24px;
+            color: $text-secondary;
+            margin-top: 4px;
+        }
+    }
+
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .input-wrapper {
+        .input-label {
+            display: block;
+            font-size: 24px;
+            color: $text-secondary;
+            margin-bottom: 8px;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+    }
+
+    .distance-input {
+        flex: 1;
+        height: 72px;
+        padding: 0 20px;
+        background-color: $bg-input;
+        border: 1px solid $border-color;
+        border-radius: 12px;
+        color: $text-primary;
+        font-size: 30px;
+        font-weight: 600;
+
+        &:focus {
+            border-color: $primary-color;
+            box-shadow: 0 0 0 3px rgba($primary-color, 0.2);
+        }
+    }
+
+    .unit-text {
+        font-size: 28px;
+        color: $text-secondary;
+        font-weight: 500;
+    }
+
+    .generate-btn {
+        width: 100%;
+        height: 80px;
+        line-height: 80px;
+        background: linear-gradient(135deg, $primary-color 0%, $primary-light 100%);
+        color: #ffffff;
+        font-size: 30px;
+        font-weight: 600;
+        border: none;
+        border-radius: 16px;
+        letter-spacing: 2px;
+        transition: all 0.3s ease;
+
+        &::after {
+            border: none;
+        }
+
+        &:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+
+        &.disabled {
+            opacity: 0.5;
+            background: $border-color;
+        }
+    }
+
+    // ===== 途经点信息 =====
+    .waypoints-info {
+        margin-top: 16px;
+        padding: 16px;
+        background-color: rgba($accent-color, 0.08);
+        border: 1px solid rgba($accent-color, 0.2);
+        border-radius: 12px;
+
+        .waypoint-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+
+            &:not(:last-child) {
+                border-bottom: 1px solid rgba($border-color, 0.5);
+            }
+        }
+
+        .waypoint-name {
+            font-size: 24px;
+            color: $accent-color;
+            font-weight: 500;
+        }
+
+        .waypoint-coord {
+            font-size: 20px;
+            color: $text-secondary;
+            font-family: 'Courier New', monospace;
+        }
+    }
+}
+
+// ===== 地图容器 =====
+.map-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+
+    .loop-map {
+        width: 100%;
+        height: 100%;
+    }
+}

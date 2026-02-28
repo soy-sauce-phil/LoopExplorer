@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.temp/
+.DS_Store
+*.log
+npm-debug.log*
+*.txt
+
+
+# 内部文档
+项目架构.md
