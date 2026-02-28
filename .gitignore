@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .temp/
+.swc/
 .DS_Store
 *.log
 npm-debug.log*
